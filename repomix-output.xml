@@ -41,17 +41,12 @@ The content is organized as follows:
 
 <directory_structure>
 .claude/settings.local.json
-.env.example
 .gitignore
 .npmignore
 bin/gemini-planning.js
 LICENSE
 package.json
 README.md
-scripts/publish.sh
-scripts/setup.bat
-scripts/setup.ps1
-setup/post-install.js
 src/index.js
 src/test-connection.js
 </directory_structure>
@@ -70,47 +65,6 @@ This section contains the contents of the repository's files.
     "deny": []
   }
 }
-</file>
-
-<file path=".env.example">
-# Gemini Architect MCP Configuration
-# Copy this file to .env and fill in your values
-
-# Required: Your Gemini API Key
-# Get it from: https://makersuite.google.com/app/apikey
-GEMINI_API_KEY=your_api_key_here
-
-# Optional: Gemini Model Selection
-# Options: gemini-2.0-flash-exp, gemini-1.5-pro, gemini-1.5-flash
-# Default: gemini-2.0-flash-exp
-GEMINI_MODEL=gemini-2.5-pro
-
-# Optional: Temperature (creativity level)
-# Range: 0.1 (focused) to 1.0 (creative)
-# Default: 0.7
-GEMINI_TEMPERATURE=0.3
-
-# Optional: Maximum tokens in response
-# Range: 1000 to 32000
-# Default: 8000
-GEMINI_MAX_TOKENS=8000
-
-# Optional: Log level for debugging
-# Options: error, warn, info, debug
-# Default: info
-LOG_LEVEL=info
-
-# Optional: Custom timeout for API calls (milliseconds)
-# Default: 60000 (60 seconds)
-API_TIMEOUT=60000
-
-# Optional: Enable response caching (future feature)
-# Default: false
-ENABLE_CACHE=false
-
-# Optional: Custom prompts directory (future feature)
-# Default: ./prompts
-PROMPTS_DIR=./prompts
 </file>
 
 <file path=".npmignore">
@@ -195,6 +149,30 @@ server.on("exit", (code) => {
 });
 </file>
 
+<file path="LICENSE">
+MIT License
+
+Copyright (c) 2025 Vladyslav Yeromenko
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+</file>
+
 <file path="package.json">
 {
   "name": "gemini-planning-mcp",
@@ -229,312 +207,6 @@ server.on("exit", (code) => {
 }
 </file>
 
-<file path="scripts/publish.sh">
-#!/bin/bash
-
-# Publish script for Gemini Architect MCP
-
-set -e
-
-echo "🚀 Publishing Gemini Planning MCP to NPM"
-echo "=========================================="
-
-# Check if logged in to npm
-echo "Checking NPM login status..."
-npm whoami &> /dev/null || (echo "❌ Not logged in to NPM. Run: npm login" && exit 1)
-
-# Run tests
-echo "Running connection test..."
-npm test || (echo "❌ Tests failed. Fix issues before publishing." && exit 1)
-
-# Check version
-CURRENT_VERSION=$(node -p "require('./package.json').version")
-echo "Current version: $CURRENT_VERSION"
-
-# Ask for version bump
-echo ""
-echo "Select version bump:"
-echo "1) Patch (bug fixes)"
-echo "2) Minor (new features)"
-echo "3) Major (breaking changes)"
-echo "4) Skip version bump"
-read -p "Choice (1-4): " choice
-
-case $choice in
-    1)
-        npm version patch
-        ;;
-    2)
-        npm version minor
-        ;;
-    3)
-        npm version major
-        ;;
-    4)
-        echo "Skipping version bump"
-        ;;
-    *)
-        echo "Invalid choice"
-        exit 1
-        ;;
-esac
-
-NEW_VERSION=$(node -p "require('./package.json').version")
-echo "Publishing version: $NEW_VERSION"
-
-# Update changelog
-echo ""
-echo "📝 Don't forget to update CHANGELOG.md!"
-read -p "Have you updated CHANGELOG.md? (y/n): " -n 1 -r
-echo ""
-if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-    echo "Please update CHANGELOG.md before publishing"
-    exit 1
-fi
-
-# Clean install
-echo "Clean installing dependencies..."
-rm -rf node_modules package-lock.json
-npm install
-
-# Create .npmignore if it doesn't exist
-if [ ! -f .npmignore ]; then
-    echo "Creating .npmignore..."
-    cp .gitignore .npmignore
-fi
-
-# Dry run
-echo ""
-echo "Running dry run..."
-npm publish --dry-run
-
-echo ""
-read -p "Everything looks good? Publish for real? (y/n): " -n 1 -r
-echo ""
-
-if [[ $REPLY =~ ^[Yy]$ ]]; then
-    # Publish
-    echo "Publishing to NPM..."
-    npm publish
-    
-    # Git tag
-    git add .
-    git commit -m "Release v$NEW_VERSION"
-    git tag -a "v$NEW_VERSION" -m "Release version $NEW_VERSION"
-    
-    echo ""
-    echo "✅ Successfully published version $NEW_VERSION!"
-    echo ""
-    echo "Next steps:"
-    echo "1. Push to GitHub: git push origin main --tags"
-    echo "2. Create GitHub release"
-    echo "3. Announce the release"
-    echo ""
-    echo "Users can now install with:"
-    echo "  npx gemini-planning-mcp"
-    echo "  npm install -g gemini-planning-mcp"
-else
-    echo "Publishing cancelled"
-    # Revert version bump if it was done
-    if [ "$choice" != "4" ]; then
-        git checkout -- package.json
-        echo "Reverted version bump"
-    fi
-fi
-</file>
-
-<file path="scripts/setup.bat">
-:: scripts/setup.bat - Windows Batch Setup Script
-@echo off
-echo ========================================
-echo   Gemini Planning MCP - Windows Setup
-echo ========================================
-echo.
-
-:: Check for Node.js
-where node >nul 2>nul
-if %errorlevel% neq 0 (
-    echo ERROR: Node.js is not installed!
-    echo Please install Node.js from: https://nodejs.org
-    pause
-    exit /b 1
-)
-
-echo Node.js found: 
-node --version
-echo.
-
-:: Run setup
-echo Starting interactive setup...
-npx gemini-planning-mcp --setup
-
-if %errorlevel% equ 0 (
-    echo.
-    echo ========================================
-    echo   Setup completed successfully!
-    echo ========================================
-    echo.
-    echo Next steps:
-    echo 1. Add to Claude:
-    echo    claude mcp add planning -s user -- npx gemini-planning-mcp
-    echo.
-    echo 2. Test in Claude:
-    echo    Type: "quick help"
-    echo.
-) else (
-    echo.
-    echo Setup failed. Please check the error messages above.
-)
-
-pause
-</file>
-
-<file path="scripts/setup.ps1">
-# scripts/setup.ps1 - Windows PowerShell Setup Script
-
-Write-Host "========================================" -ForegroundColor Cyan
-Write-Host "  Gemini Planning MCP - Windows Setup " -ForegroundColor Cyan
-Write-Host "========================================" -ForegroundColor Cyan
-Write-Host ""
-
-# Check for Node.js
-try {
-    $nodeVersion = node --version 2>$null
-    if ($nodeVersion) {
-        Write-Host "✅ Node.js found: $nodeVersion" -ForegroundColor Green
-    } else {
-        throw "Node.js not found"
-    }
-} catch {
-    Write-Host "❌ Node.js is not installed!" -ForegroundColor Red
-    Write-Host "Please install Node.js from: " -NoNewline
-    Write-Host "https://nodejs.org" -ForegroundColor Cyan
-    Write-Host ""
-    Write-Host "Press any key to open the download page..."
-    $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
-    Start-Process "https://nodejs.org"
-    exit 1
-}
-
-Write-Host ""
-
-# Check for existing installation
-$envPath = ".\.env"
-if (Test-Path $envPath) {
-    Write-Host "⚠️  Existing configuration found" -ForegroundColor Yellow
-    $response = Read-Host "Do you want to reconfigure? (y/n)"
-    if ($response -ne 'y') {
-        Write-Host "Setup cancelled" -ForegroundColor Yellow
-        exit 0
-    }
-}
-
-# Run interactive setup
-Write-Host "Starting interactive setup..." -ForegroundColor Cyan
-Write-Host ""
-
-try {
-    npx gemini-planning-mcp --setup
-
-    if ($LASTEXITCODE -eq 0) {
-        Write-Host ""
-        Write-Host "========================================" -ForegroundColor Green
-        Write-Host "   ✅ Setup completed successfully!    " -ForegroundColor Green
-        Write-Host "========================================" -ForegroundColor Green
-        Write-Host ""
-
-        Write-Host "Next steps:" -ForegroundColor Cyan
-        Write-Host ""
-        Write-Host "1. Add to Claude:" -ForegroundColor Yellow
-        Write-Host "   claude mcp add planning -s user -- npx gemini-planning-mcp" -ForegroundColor White
-        Write-Host ""
-        Write-Host "2. Or with your API key directly:" -ForegroundColor Yellow
-        Write-Host "   claude mcp add planning -s user -- env GEMINI_API_KEY=your_key npx gemini-planning-mcp" -ForegroundColor White
-        Write-Host ""
-        Write-Host "3. Test in Claude:" -ForegroundColor Yellow
-        Write-Host '   Type: "quick help"' -ForegroundColor White
-        Write-Host ""
-
-        # Offer to copy command to clipboard
-        $copyToClipboard = Read-Host "Copy Claude command to clipboard? (y/n)"
-        if ($copyToClipboard -eq 'y') {
-            "claude mcp add planning -s user -- npx gemini-planning-mcp" | Set-Clipboard
-            Write-Host "✅ Command copied to clipboard!" -ForegroundColor Green
-        }
-    } else {
-        Write-Host ""
-        Write-Host "❌ Setup failed. Please check the error messages above." -ForegroundColor Red
-        exit 1
-    }
-} catch {
-    Write-Host "❌ An error occurred during setup: $_" -ForegroundColor Red
-    exit 1
-}
-
-Write-Host ""
-Write-Host "Press any key to exit..."
-$null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
-</file>
-
-<file path="setup/post-install.js">
-#!/usr/bin/env node
-
-import chalk from 'chalk';
-import fs from 'fs';
-import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-const packageRoot = join(__dirname, '..');
-
-// Don't run in CI environments
-if (process.env.CI || process.env.CONTINUOUS_INTEGRATION) {
-  process.exit(0);
-}
-
-// Skip if running via npx (it sets npm_config_yes)
-if (process.env.npm_config_yes) {
-  process.exit(0);
-}
-
-console.log(chalk.cyan(`
-╔══════════════════════════════════════════════════════╗
-║          🎉 Gemini Planning MCP Installed!          ║
-╚══════════════════════════════════════════════════════╝
-`));
-
-// Check if .env exists
-const envPath = join(packageRoot, '.env');
-const hasEnv = fs.existsSync(envPath);
-
-if (!hasEnv && !process.env.GEMINI_API_KEY) {
-  console.log(chalk.yellow('⚠️  API key not configured yet.'));
-  console.log();
-  console.log(chalk.bold('To get started:'));
-  console.log();
-  console.log('  1. Get your API key from:');
-  console.log(chalk.cyan('     https://makersuite.google.com/app/apikey'));
-  console.log();
-  console.log('  2. Run setup:');
-  console.log(chalk.green('     npx gemini-planning-mcp --setup'));
-  console.log();
-  console.log('  3. Add to Claude:');
-  console.log(chalk.green('     claude mcp add planning -s user -- npx gemini-planning-mcp'));
-} else {
-  console.log(chalk.green('✅ Configuration detected!'));
-  console.log();
-  console.log(chalk.bold('Add to Claude:'));
-  console.log(chalk.green('  claude mcp add planning -s user -- npx gemini-planning-mcp'));
-}
-
-console.log();
-console.log(chalk.gray('For help: npx gemini-planning-mcp --help'));
-console.log();
-
-process.exit(0);
-</file>
-
 <file path="src/index.js">
 #!/usr/bin/env node
 
@@ -551,7 +223,7 @@ const CONTEXT7_URL = process.env.CONTEXT7_URL || "https://mcp.context7.com/mcp";
 // Configuration
 const config = {
   apiKey: process.env.GEMINI_API_KEY || "",
-  model: process.env.GEMINI_MODEL || "gemini-2.0-flash-exp",
+  model: process.env.GEMINI_MODEL || "gemini-2.5-pro",
   temperature: parseFloat(process.env.GEMINI_TEMPERATURE || "0.3"),
   maxTokens: parseInt(process.env.GEMINI_MAX_TOKENS || "8000"),
 };
@@ -1070,7 +742,7 @@ async function testConnection() {
 
   const config = {
     apiKey: process.env.GEMINI_API_KEY || "",
-    model: process.env.GEMINI_MODEL || "gemini-2.0-flash-exp",
+    model: process.env.GEMINI_MODEL || "gemini-2.5-pro",
     temperature: parseFloat(process.env.GEMINI_TEMPERATURE || "0.3"),
     maxTokens: parseInt(process.env.GEMINI_MAX_TOKENS || "8000"),
   };
@@ -1324,77 +996,59 @@ settings.json
 .npm/
 </file>
 
-<file path="LICENSE">
-MIT License
-
-Copyright (c) 2025 Vladyslav Yeromenko
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-</file>
-
 <file path="README.md">
 # Gemini Planning MCP
 
-MCP server for AI project planning with Gemini and Context7 documentation.
+MCP server that integrates Google Gemini with Context7 documentation for intelligent project planning in Claude.
+
+## What it does
+
+When you ask Claude to plan a project, this MCP server:
+
+1. Fetches relevant documentation from Context7
+2. Uses Gemini to generate detailed implementation plans
+3. Returns structured, actionable project plans
 
 ## Installation
 
 ```bash
-# Quick install with Claude
 claude mcp add planning -s user -- env GEMINI_API_KEY=your_key npx gemini-planning-mcp
 ```
 
-## Setup
+Get your Gemini API key: https://makersuite.google.com/app/apikey
 
-1. Get Gemini API key: https://makersuite.google.com/app/apikey
-2. Set environment variable:
-   ```bash
-   export GEMINI_API_KEY=your_key_here
-   ```
+## Usage
 
-## Tools
-
-- `test_gemini_connection` - Test Gemini connectivity
-- `test_context7_connection` - Test Context7 connectivity
-- `create_project_context` - Create planning context
-- `generate_plan_with_gemini` - Generate plan with Context7 docs
-- `render_plan_checklist` - Render plan as checklist
-
-## Usage in Claude
+In Claude, use these commands:
 
 ```
-Create project context for a React todo app with local storage
+# 1. Create project context
+"Create project context for an e-commerce site with React and Node.js"
+
+# 2. Generate plan with documentation
+"Generate plan with libraries: [{name: 'next.js'}, {name: 'stripe'}, {name: 'supabase'}]"
+
+# 3. View as checklist
+"Render plan checklist"
 ```
 
-```
-Generate plan with Gemini for the context, use libraries: [{name: "react"}, {name: "vite"}]
-```
+## Available Tools
 
-```
-Render the plan as a checklist
-```
+- `test_gemini_connection` - Test Gemini API
+- `test_context7_connection` - Test Context7 API
+- `create_project_context` - Create new project
+- `generate_plan_with_gemini` - Generate plan with docs
+- `render_plan_checklist` - Show plan as checklist
 
-## Test
+## Environment Variables
 
-```bash
-npm test
-```
+- `GEMINI_API_KEY` - Required, your Gemini API key
+- `GEMINI_MODEL` - Optional, default: `gemini-2.0-flash-exp`
+- `CONTEXT7_URL` - Optional, default: `https://mcp.context7.com/mcp`
+
+## License
+
+MIT
 </file>
 
 </files>

@@ -1,7 +1,11 @@
 #!/usr/bin/env node
 
 import { config as dotenvConfig } from "dotenv";
-dotenvConfig(); // Завантажує .env файл
+import { homedir } from "os";
+import { join } from "path";
+
+// Шукаємо .env в домашній папці
+dotenvConfig({ path: join(homedir(), ".env") });
 
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
