@@ -1,5 +1,8 @@
 #!/usr/bin/env node
 
+import { config as dotenvConfig } from "dotenv";
+dotenvConfig(); // Завантажує .env файл
+
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import {

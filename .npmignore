@@ -3,7 +3,7 @@ src/**/*.ts
 tsconfig.json
 
 # Development files
-.env.example
+.env
 .env.local
 .env.development
 *.test.js
