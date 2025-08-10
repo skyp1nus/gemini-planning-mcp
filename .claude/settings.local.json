@@ -4,7 +4,8 @@
       "mcp__test__test_gemini_connection",
       "Bash(ren:*)",
       "Bash(mv:*)",
-      "mcp__planning__test_context7_connection"
+      "mcp__planning__test_context7_connection",
+      "mcp__planning__test_gemini_connection"
     ],
     "deny": []
   }

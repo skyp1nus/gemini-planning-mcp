@@ -1,6 +1,6 @@
 {
   "name": "gemini-planning-mcp",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "MCP server for AI project planning with Gemini and Context7",
   "main": "src/index.js",
   "type": "module",
