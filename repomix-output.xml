@@ -1,0 +1,1400 @@
+This file is a merged representation of the entire codebase, combined into a single document by Repomix.
+
+<file_summary>
+This section contains a summary of this file.
+
+<purpose>
+This file contains a packed representation of the entire repository's contents.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+</purpose>
+
+<file_format>
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Repository files (if enabled)
+5. Multiple file entries, each consisting of:
+  - File path as an attribute
+  - Full contents of the file
+</file_format>
+
+<usage_guidelines>
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+</usage_guidelines>
+
+<notes>
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+- Files are sorted by Git change count (files with more changes are at the bottom)
+</notes>
+
+</file_summary>
+
+<directory_structure>
+.claude/settings.local.json
+.env.example
+.gitignore
+.npmignore
+bin/gemini-planning.js
+LICENSE
+package.json
+README.md
+scripts/publish.sh
+scripts/setup.bat
+scripts/setup.ps1
+setup/post-install.js
+src/index.js
+src/test-connection.js
+</directory_structure>
+
+<files>
+This section contains the contents of the repository's files.
+
+<file path=".claude/settings.local.json">
+{
+  "permissions": {
+    "allow": [
+      "mcp__test__test_gemini_connection",
+      "Bash(ren:*)",
+      "Bash(mv:*)"
+    ],
+    "deny": []
+  }
+}
+</file>
+
+<file path=".env.example">
+# Gemini Architect MCP Configuration
+# Copy this file to .env and fill in your values
+
+# Required: Your Gemini API Key
+# Get it from: https://makersuite.google.com/app/apikey
+GEMINI_API_KEY=your_api_key_here
+
+# Optional: Gemini Model Selection
+# Options: gemini-2.0-flash-exp, gemini-1.5-pro, gemini-1.5-flash
+# Default: gemini-2.0-flash-exp
+GEMINI_MODEL=gemini-2.5-pro
+
+# Optional: Temperature (creativity level)
+# Range: 0.1 (focused) to 1.0 (creative)
+# Default: 0.7
+GEMINI_TEMPERATURE=0.3
+
+# Optional: Maximum tokens in response
+# Range: 1000 to 32000
+# Default: 8000
+GEMINI_MAX_TOKENS=8000
+
+# Optional: Log level for debugging
+# Options: error, warn, info, debug
+# Default: info
+LOG_LEVEL=info
+
+# Optional: Custom timeout for API calls (milliseconds)
+# Default: 60000 (60 seconds)
+API_TIMEOUT=60000
+
+# Optional: Enable response caching (future feature)
+# Default: false
+ENABLE_CACHE=false
+
+# Optional: Custom prompts directory (future feature)
+# Default: ./prompts
+PROMPTS_DIR=./prompts
+</file>
+
+<file path=".npmignore">
+# Source files (only if you decide to compile)
+src/**/*.ts
+tsconfig.json
+
+# Development files
+.env.example
+.env.local
+.env.development
+*.test.js
+*.spec.js
+
+# Documentation sources
+docs/
+examples/raw/
+
+# Development and test files
+test/
+tests/
+coverage/
+.nyc_output/
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+.travis.yml
+
+# Editor files
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+
+# Build artifacts not needed
+*.map
+
+# Development dependencies info
+yarn.lock
+package-lock.json
+
+# Temporary files
+*.tmp
+*.log
+.tmp/
+temp/
+</file>
+
+<file path="bin/gemini-planning.js">
+#!/usr/bin/env node
+
+import { spawn } from "child_process";
+import { fileURLToPath } from "url";
+import { dirname, join } from "path";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const serverPath = join(__dirname, "..", "src", "index.js");
+
+// Pass through environment variables and start server
+const server = spawn("node", [serverPath], {
+  stdio: "inherit",
+  env: process.env,
+});
+
+server.on("error", (err) => {
+  console.error("Failed to start server:", err);
+  process.exit(1);
+});
+
+server.on("exit", (code) => {
+  process.exit(code || 0);
+});
+</file>
+
+<file path="package.json">
+{
+  "name": "gemini-planning-mcp",
+  "version": "1.0.0",
+  "description": "MCP server for AI project planning with Gemini and Context7",
+  "main": "src/index.js",
+  "type": "module",
+  "bin": {
+    "gemini-planning": "./bin/gemini-planning.js"
+  },
+  "scripts": {
+    "start": "node src/index.js",
+    "test": "node src/test-connection.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^0.5.0",
+    "@google/generative-ai": "^0.21.0",
+    "chalk": "^5.3.0",
+    "ora": "^8.0.1"
+  },
+  "keywords": [
+    "mcp",
+    "claude",
+    "gemini",
+    "context7",
+    "planning"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
+</file>
+
+<file path="scripts/publish.sh">
+#!/bin/bash
+
+# Publish script for Gemini Architect MCP
+
+set -e
+
+echo "🚀 Publishing Gemini Planning MCP to NPM"
+echo "=========================================="
+
+# Check if logged in to npm
+echo "Checking NPM login status..."
+npm whoami &> /dev/null || (echo "❌ Not logged in to NPM. Run: npm login" && exit 1)
+
+# Run tests
+echo "Running connection test..."
+npm test || (echo "❌ Tests failed. Fix issues before publishing." && exit 1)
+
+# Check version
+CURRENT_VERSION=$(node -p "require('./package.json').version")
+echo "Current version: $CURRENT_VERSION"
+
+# Ask for version bump
+echo ""
+echo "Select version bump:"
+echo "1) Patch (bug fixes)"
+echo "2) Minor (new features)"
+echo "3) Major (breaking changes)"
+echo "4) Skip version bump"
+read -p "Choice (1-4): " choice
+
+case $choice in
+    1)
+        npm version patch
+        ;;
+    2)
+        npm version minor
+        ;;
+    3)
+        npm version major
+        ;;
+    4)
+        echo "Skipping version bump"
+        ;;
+    *)
+        echo "Invalid choice"
+        exit 1
+        ;;
+esac
+
+NEW_VERSION=$(node -p "require('./package.json').version")
+echo "Publishing version: $NEW_VERSION"
+
+# Update changelog
+echo ""
+echo "📝 Don't forget to update CHANGELOG.md!"
+read -p "Have you updated CHANGELOG.md? (y/n): " -n 1 -r
+echo ""
+if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+    echo "Please update CHANGELOG.md before publishing"
+    exit 1
+fi
+
+# Clean install
+echo "Clean installing dependencies..."
+rm -rf node_modules package-lock.json
+npm install
+
+# Create .npmignore if it doesn't exist
+if [ ! -f .npmignore ]; then
+    echo "Creating .npmignore..."
+    cp .gitignore .npmignore
+fi
+
+# Dry run
+echo ""
+echo "Running dry run..."
+npm publish --dry-run
+
+echo ""
+read -p "Everything looks good? Publish for real? (y/n): " -n 1 -r
+echo ""
+
+if [[ $REPLY =~ ^[Yy]$ ]]; then
+    # Publish
+    echo "Publishing to NPM..."
+    npm publish
+    
+    # Git tag
+    git add .
+    git commit -m "Release v$NEW_VERSION"
+    git tag -a "v$NEW_VERSION" -m "Release version $NEW_VERSION"
+    
+    echo ""
+    echo "✅ Successfully published version $NEW_VERSION!"
+    echo ""
+    echo "Next steps:"
+    echo "1. Push to GitHub: git push origin main --tags"
+    echo "2. Create GitHub release"
+    echo "3. Announce the release"
+    echo ""
+    echo "Users can now install with:"
+    echo "  npx gemini-planning-mcp"
+    echo "  npm install -g gemini-planning-mcp"
+else
+    echo "Publishing cancelled"
+    # Revert version bump if it was done
+    if [ "$choice" != "4" ]; then
+        git checkout -- package.json
+        echo "Reverted version bump"
+    fi
+fi
+</file>
+
+<file path="scripts/setup.bat">
+:: scripts/setup.bat - Windows Batch Setup Script
+@echo off
+echo ========================================
+echo   Gemini Planning MCP - Windows Setup
+echo ========================================
+echo.
+
+:: Check for Node.js
+where node >nul 2>nul
+if %errorlevel% neq 0 (
+    echo ERROR: Node.js is not installed!
+    echo Please install Node.js from: https://nodejs.org
+    pause
+    exit /b 1
+)
+
+echo Node.js found: 
+node --version
+echo.
+
+:: Run setup
+echo Starting interactive setup...
+npx gemini-planning-mcp --setup
+
+if %errorlevel% equ 0 (
+    echo.
+    echo ========================================
+    echo   Setup completed successfully!
+    echo ========================================
+    echo.
+    echo Next steps:
+    echo 1. Add to Claude:
+    echo    claude mcp add planning -s user -- npx gemini-planning-mcp
+    echo.
+    echo 2. Test in Claude:
+    echo    Type: "quick help"
+    echo.
+) else (
+    echo.
+    echo Setup failed. Please check the error messages above.
+)
+
+pause
+</file>
+
+<file path="scripts/setup.ps1">
+# scripts/setup.ps1 - Windows PowerShell Setup Script
+
+Write-Host "========================================" -ForegroundColor Cyan
+Write-Host "  Gemini Planning MCP - Windows Setup " -ForegroundColor Cyan
+Write-Host "========================================" -ForegroundColor Cyan
+Write-Host ""
+
+# Check for Node.js
+try {
+    $nodeVersion = node --version 2>$null
+    if ($nodeVersion) {
+        Write-Host "✅ Node.js found: $nodeVersion" -ForegroundColor Green
+    } else {
+        throw "Node.js not found"
+    }
+} catch {
+    Write-Host "❌ Node.js is not installed!" -ForegroundColor Red
+    Write-Host "Please install Node.js from: " -NoNewline
+    Write-Host "https://nodejs.org" -ForegroundColor Cyan
+    Write-Host ""
+    Write-Host "Press any key to open the download page..."
+    $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+    Start-Process "https://nodejs.org"
+    exit 1
+}
+
+Write-Host ""
+
+# Check for existing installation
+$envPath = ".\.env"
+if (Test-Path $envPath) {
+    Write-Host "⚠️  Existing configuration found" -ForegroundColor Yellow
+    $response = Read-Host "Do you want to reconfigure? (y/n)"
+    if ($response -ne 'y') {
+        Write-Host "Setup cancelled" -ForegroundColor Yellow
+        exit 0
+    }
+}
+
+# Run interactive setup
+Write-Host "Starting interactive setup..." -ForegroundColor Cyan
+Write-Host ""
+
+try {
+    npx gemini-planning-mcp --setup
+
+    if ($LASTEXITCODE -eq 0) {
+        Write-Host ""
+        Write-Host "========================================" -ForegroundColor Green
+        Write-Host "   ✅ Setup completed successfully!    " -ForegroundColor Green
+        Write-Host "========================================" -ForegroundColor Green
+        Write-Host ""
+
+        Write-Host "Next steps:" -ForegroundColor Cyan
+        Write-Host ""
+        Write-Host "1. Add to Claude:" -ForegroundColor Yellow
+        Write-Host "   claude mcp add planning -s user -- npx gemini-planning-mcp" -ForegroundColor White
+        Write-Host ""
+        Write-Host "2. Or with your API key directly:" -ForegroundColor Yellow
+        Write-Host "   claude mcp add planning -s user -- env GEMINI_API_KEY=your_key npx gemini-planning-mcp" -ForegroundColor White
+        Write-Host ""
+        Write-Host "3. Test in Claude:" -ForegroundColor Yellow
+        Write-Host '   Type: "quick help"' -ForegroundColor White
+        Write-Host ""
+
+        # Offer to copy command to clipboard
+        $copyToClipboard = Read-Host "Copy Claude command to clipboard? (y/n)"
+        if ($copyToClipboard -eq 'y') {
+            "claude mcp add planning -s user -- npx gemini-planning-mcp" | Set-Clipboard
+            Write-Host "✅ Command copied to clipboard!" -ForegroundColor Green
+        }
+    } else {
+        Write-Host ""
+        Write-Host "❌ Setup failed. Please check the error messages above." -ForegroundColor Red
+        exit 1
+    }
+} catch {
+    Write-Host "❌ An error occurred during setup: $_" -ForegroundColor Red
+    exit 1
+}
+
+Write-Host ""
+Write-Host "Press any key to exit..."
+$null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+</file>
+
+<file path="setup/post-install.js">
+#!/usr/bin/env node
+
+import chalk from 'chalk';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const packageRoot = join(__dirname, '..');
+
+// Don't run in CI environments
+if (process.env.CI || process.env.CONTINUOUS_INTEGRATION) {
+  process.exit(0);
+}
+
+// Skip if running via npx (it sets npm_config_yes)
+if (process.env.npm_config_yes) {
+  process.exit(0);
+}
+
+console.log(chalk.cyan(`
+╔══════════════════════════════════════════════════════╗
+║          🎉 Gemini Planning MCP Installed!          ║
+╚══════════════════════════════════════════════════════╝
+`));
+
+// Check if .env exists
+const envPath = join(packageRoot, '.env');
+const hasEnv = fs.existsSync(envPath);
+
+if (!hasEnv && !process.env.GEMINI_API_KEY) {
+  console.log(chalk.yellow('⚠️  API key not configured yet.'));
+  console.log();
+  console.log(chalk.bold('To get started:'));
+  console.log();
+  console.log('  1. Get your API key from:');
+  console.log(chalk.cyan('     https://makersuite.google.com/app/apikey'));
+  console.log();
+  console.log('  2. Run setup:');
+  console.log(chalk.green('     npx gemini-planning-mcp --setup'));
+  console.log();
+  console.log('  3. Add to Claude:');
+  console.log(chalk.green('     claude mcp add planning -s user -- npx gemini-planning-mcp'));
+} else {
+  console.log(chalk.green('✅ Configuration detected!'));
+  console.log();
+  console.log(chalk.bold('Add to Claude:'));
+  console.log(chalk.green('  claude mcp add planning -s user -- npx gemini-planning-mcp'));
+}
+
+console.log();
+console.log(chalk.gray('For help: npx gemini-planning-mcp --help'));
+console.log();
+
+process.exit(0);
+</file>
+
+<file path="src/index.js">
+#!/usr/bin/env node
+
+import { Server } from "@modelcontextprotocol/sdk/server/index.js";
+import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import {
+  CallToolRequestSchema,
+  ListToolsRequestSchema,
+} from "@modelcontextprotocol/sdk/types.js";
+import { GoogleGenerativeAI } from "@google/generative-ai";
+
+const CONTEXT7_URL = process.env.CONTEXT7_URL || "https://mcp.context7.com/mcp";
+
+// Configuration
+const config = {
+  apiKey: process.env.GEMINI_API_KEY || "",
+  model: process.env.GEMINI_MODEL || "gemini-2.0-flash-exp",
+  temperature: parseFloat(process.env.GEMINI_TEMPERATURE || "0.3"),
+  maxTokens: parseInt(process.env.GEMINI_MAX_TOKENS || "8000"),
+};
+
+// Initialize Gemini
+const genAI = new GoogleGenerativeAI(config.apiKey);
+const model = genAI.getGenerativeModel({
+  model: config.model,
+  generationConfig: {
+    temperature: config.temperature,
+    maxOutputTokens: config.maxTokens,
+  },
+});
+
+// Context store - simple in-memory storage
+const contexts = new Map();
+
+// Initialize MCP Server
+const server = new Server(
+  {
+    name: "gemini-planning-server",
+    version: "1.0.0",
+  },
+  {
+    capabilities: {
+      tools: {},
+    },
+  },
+);
+
+// Context7 client
+async function callContext7(method, params = {}) {
+  const body = {
+    jsonrpc: "2.0",
+    id: String(Date.now()),
+    method,
+    params,
+  };
+
+  const res = await fetch(CONTEXT7_URL, {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      accept: "application/json, text/event-stream",
+    },
+    body: JSON.stringify(body),
+  });
+
+  const text = await res.text();
+  if (!res.ok) {
+    throw new Error(`Context7 HTTP ${res.status}: ${text}`);
+  }
+
+  // Parse response (handle SSE format)
+  let data;
+  try {
+    if (text.includes("data:")) {
+      const lines = text.split("\n").filter((l) => l.startsWith("data:"));
+      const lastLine = lines[lines.length - 1];
+      data = JSON.parse(lastLine.replace("data:", "").trim());
+    } else {
+      data = JSON.parse(text);
+    }
+  } catch (e) {
+    throw new Error(`Failed to parse Context7 response: ${text}`);
+  }
+
+  if (data.error) throw new Error(data.error.message);
+  return data.result;
+}
+
+// Tool handlers
+server.setRequestHandler(ListToolsRequestSchema, async () => {
+  return {
+    tools: [
+      {
+        name: "test_gemini_connection",
+        description: "Test connection to Gemini",
+        inputSchema: {
+          type: "object",
+          properties: {},
+          required: [],
+        },
+      },
+      {
+        name: "test_context7_connection",
+        description: "Test connection to Context7 MCP",
+        inputSchema: {
+          type: "object",
+          properties: {},
+          required: [],
+        },
+      },
+      {
+        name: "create_project_context",
+        description: "Create a new project planning context",
+        inputSchema: {
+          type: "object",
+          properties: {
+            projectName: { type: "string", description: "Name of the project" },
+            requirements: {
+              type: "string",
+              description: "Project requirements",
+            },
+            constraints: { type: "string", description: "Any constraints" },
+          },
+          required: ["projectName", "requirements"],
+        },
+      },
+      {
+        name: "generate_plan_with_gemini",
+        description:
+          "Generate implementation plan using Gemini with Context7 docs",
+        inputSchema: {
+          type: "object",
+          properties: {
+            contextId: { type: "string", description: "Project context ID" },
+            projectName: {
+              type: "string",
+              description: "Project name (if no contextId)",
+            },
+            requirements: {
+              type: "string",
+              description: "Requirements (if no contextId)",
+            },
+            constraints: {
+              type: "string",
+              description: "Additional constraints",
+            },
+            libraries: {
+              type: "array",
+              description: "Libraries to fetch docs for",
+              items: {
+                type: "object",
+                properties: {
+                  name: { type: "string" },
+                  topic: { type: "string" },
+                  tokens: { type: "number" },
+                },
+                required: ["name"],
+              },
+            },
+          },
+        },
+      },
+      {
+        name: "render_plan_checklist",
+        description: "Render plan as a checklist",
+        inputSchema: {
+          type: "object",
+          properties: {
+            contextId: { type: "string", description: "Context ID" },
+          },
+          required: ["contextId"],
+        },
+      },
+    ],
+  };
+});
+
+// Handle tool calls
+server.setRequestHandler(CallToolRequestSchema, async (request) => {
+  try {
+    const { name, arguments: args } = request.params;
+
+    switch (name) {
+      case "test_gemini_connection": {
+        const result = await model.generateContent(
+          'Say "Connection successful" in JSON format',
+        );
+        const response = result.response.text();
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(
+                {
+                  success: true,
+                  message: "Gemini connection successful",
+                  model: config.model,
+                  response,
+                },
+                null,
+                2,
+              ),
+            },
+          ],
+        };
+      }
+
+      case "test_context7_connection": {
+        try {
+          const result = await callContext7("tools/list");
+          return {
+            content: [
+              {
+                type: "text",
+                text: JSON.stringify(
+                  {
+                    success: true,
+                    url: CONTEXT7_URL,
+                    tools: result,
+                  },
+                  null,
+                  2,
+                ),
+              },
+            ],
+          };
+        } catch (e) {
+          return {
+            content: [
+              {
+                type: "text",
+                text: JSON.stringify(
+                  {
+                    success: false,
+                    error: e.message,
+                  },
+                  null,
+                  2,
+                ),
+              },
+            ],
+            isError: true,
+          };
+        }
+      }
+
+      case "create_project_context": {
+        const { projectName, requirements, constraints } = args;
+        const contextId = `${projectName.toLowerCase().replace(/\s+/g, "-")}-${Date.now()}`;
+
+        const context = {
+          id: contextId,
+          projectName,
+          requirements,
+          constraints,
+          planningHistory: [],
+          createdAt: new Date(),
+        };
+
+        contexts.set(contextId, context);
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(
+                {
+                  success: true,
+                  contextId,
+                  message: `Created project context: ${contextId}`,
+                  projectName,
+                },
+                null,
+                2,
+              ),
+            },
+          ],
+        };
+      }
+
+      case "generate_plan_with_gemini": {
+        const {
+          contextId,
+          projectName,
+          requirements,
+          constraints,
+          libraries = [],
+        } = args;
+
+        // Get or create context
+        let context;
+        if (contextId) {
+          context = contexts.get(contextId);
+          if (!context) throw new Error(`Context ${contextId} not found`);
+        } else {
+          if (!projectName || !requirements) {
+            throw new Error("Provide contextId OR projectName + requirements");
+          }
+          const newContextId = `${projectName.toLowerCase().replace(/\s+/g, "-")}-${Date.now()}`;
+          context = {
+            id: newContextId,
+            projectName,
+            requirements,
+            constraints,
+            planningHistory: [],
+            createdAt: new Date(),
+          };
+          contexts.set(newContextId, context);
+        }
+
+        // Fetch Context7 docs if libraries provided
+        let referenceDocs = "";
+        if (libraries.length > 0) {
+          for (const lib of libraries) {
+            try {
+              // Resolve library ID
+              const idResult = await callContext7("tools/call", {
+                name: "resolve-library-id",
+                arguments: { libraryName: lib.name },
+              });
+              const libraryId = idResult.content?.[0]?.text?.trim();
+
+              // Get docs
+              const docsArgs = { context7CompatibleLibraryID: libraryId };
+              if (lib.topic) docsArgs.topic = lib.topic;
+              if (lib.tokens) docsArgs.tokens = lib.tokens;
+
+              const docsResult = await callContext7("tools/call", {
+                name: "get-library-docs",
+                arguments: docsArgs,
+              });
+
+              const docs = docsResult.content?.[0]?.text || "";
+              referenceDocs += `\n\nLibrary: ${lib.name}${lib.topic ? ` (${lib.topic})` : ""}\n${docs}`;
+            } catch (e) {
+              console.error(`Failed to fetch docs for ${lib.name}:`, e);
+            }
+          }
+        }
+
+        // Build prompt
+        const prompt = `Create a concrete implementation plan for this project.
+
+PROJECT: ${context.projectName}
+REQUIREMENTS: ${context.requirements}
+${constraints ? `CONSTRAINTS: ${constraints}` : ""}
+${referenceDocs ? `\nREFERENCE DOCUMENTATION:\n${referenceDocs}` : ""}
+
+Respond with valid JSON using this schema:
+{
+  "overview": "Project description",
+  "architecture": [
+    { "component": "string", "purpose": "string", "technologies": ["string"] }
+  ],
+  "implementation_steps": [
+    {
+      "id": "string",
+      "phase": "setup|core|features|testing",
+      "description": "string",
+      "files_to_create": ["string"],
+      "dependencies": ["string"]
+    }
+  ],
+  "file_structure": {},
+  "dependencies": [
+    { "name": "string", "version": "string", "purpose": "string" }
+  ],
+  "testing_strategy": "string",
+  "deployment_notes": "string"
+}`;
+
+        // Generate plan with Gemini
+        const result = await model.generateContent(prompt);
+        let planText = result.response.text();
+
+        // Parse JSON from response
+        let plan;
+        try {
+          // Try to extract JSON from markdown code blocks
+          const jsonMatch =
+            planText.match(/```json\s*([\s\S]*?)\s*```/) ||
+            planText.match(/\{[\s\S]*\}/);
+          if (jsonMatch) {
+            plan = JSON.parse(jsonMatch[jsonMatch.length - 1]);
+          } else {
+            plan = JSON.parse(planText);
+          }
+        } catch (e) {
+          throw new Error(`Failed to parse plan: ${e.message}`);
+        }
+
+        // Save to context
+        context.planningHistory.push({
+          id: `plan-${Date.now()}`,
+          timestamp: new Date(),
+          plan,
+          libraries: libraries.map((l) => l.name),
+        });
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(
+                {
+                  success: true,
+                  contextId: context.id,
+                  plan,
+                  message: "Plan generated successfully",
+                },
+                null,
+                2,
+              ),
+            },
+          ],
+        };
+      }
+
+      case "render_plan_checklist": {
+        const { contextId } = args;
+        const context = contexts.get(contextId);
+        if (!context) throw new Error(`Context ${contextId} not found`);
+        if (!context.planningHistory.length) throw new Error("No plans found");
+
+        const latestPlan =
+          context.planningHistory[context.planningHistory.length - 1].plan;
+
+        let checklist = `# ${context.projectName}\n\n`;
+        checklist += `## Overview\n${latestPlan.overview}\n\n`;
+
+        if (latestPlan.dependencies?.length) {
+          checklist += `## Dependencies\n`;
+          latestPlan.dependencies.forEach((dep) => {
+            checklist += `- [ ] ${dep.name}@${dep.version} - ${dep.purpose}\n`;
+          });
+          checklist += "\n";
+        }
+
+        if (latestPlan.implementation_steps?.length) {
+          checklist += `## Implementation Steps\n`;
+          const phases = {};
+          latestPlan.implementation_steps.forEach((step) => {
+            if (!phases[step.phase]) phases[step.phase] = [];
+            phases[step.phase].push(step);
+          });
+
+          Object.entries(phases).forEach(([phase, steps]) => {
+            checklist += `\n### ${phase}\n`;
+            steps.forEach((step) => {
+              checklist += `- [ ] ${step.description}\n`;
+              if (step.files_to_create?.length) {
+                step.files_to_create.forEach((file) => {
+                  checklist += `  - Create: ${file}\n`;
+                });
+              }
+            });
+          });
+        }
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: checklist,
+            },
+          ],
+        };
+      }
+
+      default:
+        throw new Error(`Unknown tool: ${name}`);
+    }
+  } catch (error) {
+    return {
+      content: [
+        {
+          type: "text",
+          text: JSON.stringify(
+            {
+              success: false,
+              error: error.message,
+            },
+            null,
+            2,
+          ),
+        },
+      ],
+      isError: true,
+    };
+  }
+});
+
+// Start server
+async function main() {
+  if (!config.apiKey) {
+    console.error("❌ GEMINI_API_KEY not set!");
+    console.log("Set it: export GEMINI_API_KEY=your_key_here");
+    process.exit(1);
+  }
+
+  console.log("🚀 Starting Gemini Planning MCP Server...");
+  console.log(`Model: ${config.model}`);
+
+  const transport = new StdioServerTransport();
+  await server.connect(transport);
+
+  console.log("✅ Server running");
+}
+
+main().catch((error) => {
+  console.error("Server failed:", error);
+  process.exit(1);
+});
+</file>
+
+<file path="src/test-connection.js">
+#!/usr/bin/env node
+
+import { GoogleGenerativeAI } from "@google/generative-ai";
+import chalk from "chalk";
+import ora from "ora";
+
+const CONTEXT7_URL = process.env.CONTEXT7_URL || "https://mcp.context7.com/mcp";
+
+async function testConnection() {
+  console.log(
+    chalk.cyan(`
+╔══════════════════════════════════════════════════════╗
+║             🧪 Testing MCP Gemini                     ║
+╚══════════════════════════════════════════════════════╝
+`),
+  );
+
+  const config = {
+    apiKey: process.env.GEMINI_API_KEY || "",
+    model: process.env.GEMINI_MODEL || "gemini-2.0-flash-exp",
+    temperature: parseFloat(process.env.GEMINI_TEMPERATURE || "0.3"),
+    maxTokens: parseInt(process.env.GEMINI_MAX_TOKENS || "8000"),
+  };
+
+  // Check API key
+  if (!config.apiKey) {
+    console.log(chalk.red("❌ GEMINI_API_KEY not set!"));
+    console.log(
+      chalk.yellow("Get your key at: https://makersuite.google.com/app/apikey"),
+    );
+    console.log(chalk.gray("Set it: export GEMINI_API_KEY=your_key_here"));
+    process.exit(1);
+  }
+
+  let spinner;
+  let successCount = 0;
+  let failCount = 0;
+
+  // Test Gemini
+  console.log(chalk.bold("1. Testing Gemini Connection..."));
+  spinner = ora("Connecting to Gemini...").start();
+
+  try {
+    const genAI = new GoogleGenerativeAI(config.apiKey);
+    const model = genAI.getGenerativeModel({
+      model: config.model,
+      generationConfig: {
+        temperature: config.temperature,
+        maxOutputTokens: config.maxTokens,
+      },
+    });
+
+    spinner.text = "Sending test request...";
+    const result = await model.generateContent(
+      'Respond with exactly: "Connection successful!"',
+    );
+    const response = result.response.text();
+
+    spinner.succeed("Gemini connected successfully!");
+    console.log(chalk.gray(`  Response: ${response.substring(0, 50)}...`));
+    console.log(chalk.gray(`  Model: ${config.model}`));
+    successCount++;
+  } catch (error) {
+    spinner.fail("Gemini connection failed!");
+    console.log(chalk.red(`  Error: ${error.message}`));
+    failCount++;
+  }
+
+  console.log();
+
+  // Test Context7
+  console.log(chalk.bold("2. Testing Context7 Connection..."));
+  spinner = ora("Connecting to Context7...").start();
+
+  try {
+    const res = await fetch(CONTEXT7_URL, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        accept: "application/json, text/event-stream",
+      },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id: String(Date.now()),
+        method: "tools/list",
+      }),
+    });
+
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+    const text = await res.text();
+    let data;
+
+    try {
+      if (text.includes("data:")) {
+        const lines = text.split("\n").filter((l) => l.startsWith("data:"));
+        const lastLine = lines[lines.length - 1];
+        data = JSON.parse(lastLine.replace("data:", "").trim());
+      } else {
+        data = JSON.parse(text);
+      }
+    } catch {
+      throw new Error("Failed to parse response");
+    }
+
+    if (data.error) throw new Error(data.error.message);
+
+    spinner.succeed("Context7 connected successfully!");
+    console.log(chalk.gray(`  URL: ${CONTEXT7_URL}`));
+    if (data.result?.tools) {
+      console.log(chalk.gray(`  Available tools: ${data.result.tools.length}`));
+    }
+    successCount++;
+  } catch (error) {
+    spinner.fail("Context7 connection failed!");
+    console.log(chalk.red(`  Error: ${error.message}`));
+    failCount++;
+  }
+
+  console.log();
+
+  // Test tool integration
+  console.log(chalk.bold("3. Testing Tool Integration..."));
+  const toolTests = [
+    {
+      name: "Library Resolution",
+      test: async () => {
+        const res = await fetch(CONTEXT7_URL, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            jsonrpc: "2.0",
+            id: "1",
+            method: "tools/call",
+            params: {
+              name: "resolve-library-id",
+              arguments: { libraryName: "react" },
+            },
+          }),
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return true;
+      },
+    },
+    {
+      name: "Documentation Fetch",
+      test: async () => {
+        const genAI = new GoogleGenerativeAI(config.apiKey);
+        const model = genAI.getGenerativeModel({ model: config.model });
+        const result = await model.generateContent(
+          "List 3 React hooks in one line",
+        );
+        return result.response.text().length > 0;
+      },
+    },
+  ];
+
+  for (const { name, test } of toolTests) {
+    const testSpinner = ora(`Testing ${name}...`).start();
+    try {
+      await test();
+      testSpinner.succeed(`${name}: OK`);
+      successCount++;
+    } catch (error) {
+      testSpinner.fail(`${name}: Failed`);
+      failCount++;
+    }
+  }
+
+  // Summary
+  console.log();
+  console.log(chalk.cyan("═══════════════════════════════════════════"));
+
+  if (failCount === 0) {
+    console.log(chalk.green("✅ All tests passed!"));
+  } else {
+    console.log(
+      chalk.yellow(`⚠️  ${successCount} passed, ${failCount} failed`),
+    );
+  }
+
+  console.log(chalk.cyan("═══════════════════════════════════════════"));
+  console.log();
+
+  // System info
+  console.log(chalk.bold("System Information:"));
+  console.log(`  Model: ${chalk.cyan(config.model)}`);
+  console.log(`  Temperature: ${chalk.cyan(config.temperature)}`);
+  console.log(`  Max Tokens: ${chalk.cyan(config.maxTokens)}`);
+  console.log(`  API Key: ${chalk.cyan("***" + config.apiKey.slice(-4))}`);
+  console.log(`  Context7 URL: ${chalk.cyan(CONTEXT7_URL)}`);
+  console.log();
+
+  if (failCount === 0) {
+    console.log(chalk.green("🚀 MCP Gemini is ready to use!"));
+  } else {
+    console.log(chalk.yellow("⚠️  Some components need attention."));
+    process.exit(1);
+  }
+}
+
+testConnection().catch((error) => {
+  console.error(chalk.red("Fatal error:"), error);
+  process.exit(1);
+});
+</file>
+
+<file path=".gitignore">
+# Node modules
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment files
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+
+# IDE
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+.DS_Store
+
+# Build outputs
+dist/
+build/
+*.tgz
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# Testing
+coverage/
+.nyc_output
+
+# Temporary files
+*.tmp
+*.temp
+.tmp/
+.temp/
+
+# OS files
+Thumbs.db
+.DS_Store
+
+# Package files
+*.tgz
+package-lock.json
+yarn.lock
+
+# User configuration
+config.json
+settings.json
+
+# Backup files
+*.backup
+*.bak
+
+# Cache
+.cache/
+.npm/
+</file>
+
+<file path="LICENSE">
+MIT License
+
+Copyright (c) 2025 Vladyslav Yeromenko
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+</file>
+
+<file path="README.md">
+# Gemini Planning MCP
+
+MCP server for AI project planning with Gemini and Context7 documentation.
+
+## Installation
+
+```bash
+# Quick install with Claude
+claude mcp add planning -s user -- env GEMINI_API_KEY=your_key npx gemini-planning-mcp
+```
+
+## Setup
+
+1. Get Gemini API key: https://makersuite.google.com/app/apikey
+2. Set environment variable:
+   ```bash
+   export GEMINI_API_KEY=your_key_here
+   ```
+
+## Tools
+
+- `test_gemini_connection` - Test Gemini connectivity
+- `test_context7_connection` - Test Context7 connectivity
+- `create_project_context` - Create planning context
+- `generate_plan_with_gemini` - Generate plan with Context7 docs
+- `render_plan_checklist` - Render plan as checklist
+
+## Usage in Claude
+
+```
+Create project context for a React todo app with local storage
+```
+
+```
+Generate plan with Gemini for the context, use libraries: [{name: "react"}, {name: "vite"}]
+```
+
+```
+Render the plan as a checklist
+```
+
+## Test
+
+```bash
+npm test
+```
+</file>
+
+</files>

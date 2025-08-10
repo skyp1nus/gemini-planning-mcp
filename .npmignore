@@ -1,0 +1,52 @@
+# Source files (only if you decide to compile)
+src/**/*.ts
+tsconfig.json
+
+# Development files
+.env.example
+.env.local
+.env.development
+*.test.js
+*.spec.js
+
+# Documentation sources
+docs/
+examples/raw/
+
+# Development and test files
+test/
+tests/
+coverage/
+.nyc_output/
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+.travis.yml
+
+# Editor files
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+
+# Build artifacts not needed
+*.map
+
+# Development dependencies info
+yarn.lock
+package-lock.json
+
+# Temporary files
+*.tmp
+*.log
+.tmp/
+temp/

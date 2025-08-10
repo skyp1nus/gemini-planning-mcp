@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__test__test_gemini_connection",
+      "Bash(ren:*)",
+      "Bash(mv:*)"
+    ],
+    "deny": []
+  }
+}
